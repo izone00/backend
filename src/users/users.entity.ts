@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Channel } from 'src/channels/channels.entity';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 
 @Entity()
 export class User {
@@ -7,9 +8,6 @@ export class User {
 
   @Column()
   email: string;
-
-  @Column()
-  password: string;
 
   @Column()
   nickname: string;
@@ -22,4 +20,7 @@ export class User {
 
   @Column()
   bio: string;
+
+  @OneToMany(() => Channel, (channel) => channel.owner)
+  own_channels: Channel[];
 }
