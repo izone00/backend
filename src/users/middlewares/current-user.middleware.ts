@@ -18,12 +18,14 @@ export class CurrentUserMiddleware implements NestMiddleware {
 
   use(req: Request, res: Response, next: NextFunction) {
     const currentUser: User = {
-      id: 0,
+      id: 'a9535614-0bc2-4adc-955a-0534b76d2ef3',
       email: 'example@email.com',
       nickname: 'anonymous',
       lp: 0,
       bio: 'nothing',
       own_channels: [],
+      channel_relations: [],
+      userRelations: [],
     };
     req.currentUser = currentUser;
 

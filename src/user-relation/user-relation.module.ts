@@ -1,7 +1,11 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserRelation } from './user-relation.entity';
 import { UserRelationService } from './user-relation.service';
 
 @Module({
-  providers: [UserRelationService]
+  imports: [TypeOrmModule.forFeature([UserRelation])],
+  providers: [UserRelationService],
+  exports: [UserRelationService],
 })
 export class UserRelationModule {}

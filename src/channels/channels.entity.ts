@@ -1,20 +1,31 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
 import { User } from 'src/users/users.entity';
+import { ChannelRelation } from 'src/channel-relation/channel-relation.entity';
+import { UUID } from 'crypto';
 
 @Entity()
 export class Channel {
   @PrimaryGeneratedColumn()
-  id: number;
+  id: UUID;
+
+  @Column()
+  title: string;
 
   @ManyToOne(() => User, (user) => user.own_channels)
   owner: User;
 
   @Column()
-  title: string;
+  password: string;
 
   @Column()
   is_private: boolean;
 
-  @Column()
-  password: string;
+  @OneToMany(() => ChannelRelation, (relation) => relation.channel)
+  relations: ChannelRelation;
 }
