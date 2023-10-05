@@ -6,19 +6,24 @@ import { User } from 'src/users/users.entity';
 import { CreateChannelDto } from './dtos/create-channel.dto';
 import { UpdateChannelDto } from './dtos/update-channel.dto';
 import { UUID } from 'crypto';
+import { ChannelRelationService } from 'src/channel-relation/channel-relation.service';
 
 @Injectable()
 export class ChannelsService {
-  constructor(@InjectRepository(Channel) private repo: Repository<Channel>) {}
+  constructor(
+    @InjectRepository(Channel) private repo: Repository<Channel>,
+    private channelRelService: ChannelRelationService,
+  ) {}
 
-  create(createChannelDto: CreateChannelDto, owner: User) {
+  async create(createChannelDto: CreateChannelDto, owner: User) {
     const channel = this.repo.create({ ...createChannelDto, owner });
+    const channelRel = await this.channelRelService.createOwner(channel, owner);
 
-    return this.repo.save(channel);
+    return this.repo.save(channel); // save에 실패한경우 channelRel을 삭제해야한다!
   }
 
   findAll() {
-    return this.repo.find({ where: { is_private: false } });
+    return this.repo.find({ where: { isPrivate: false } });
   }
 
   findOne(id: UUID) {

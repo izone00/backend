@@ -24,7 +24,7 @@ export class Channel {
   password: string;
 
   @Column()
-  is_private: boolean;
+  isPrivate: boolean;
 
   @OneToMany(() => ChannelRelation, (relation) => relation.channel)
   relations: ChannelRelation;

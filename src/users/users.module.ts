@@ -5,14 +5,12 @@ import { UsersController } from './users.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './users.entity';
 import { CurrentUserMiddleware } from './middlewares/current-user.middleware';
-import { UserRelationService } from 'src/user-relation/user-relation.service';
-import { UserRelationModule } from 'src/user-relation/user-relation.module';
-import { UserRelation } from 'src/user-relation/user-relation.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, UserRelation]), UserRelationModule],
-  providers: [UsersService, UserRelationService],
+  imports: [TypeOrmModule.forFeature([User])],
+  providers: [UsersService],
   controllers: [UsersController],
+  exports: [UsersService],
 })
 export class UsersModule {
   configure(consumer: MiddlewareConsumer) {

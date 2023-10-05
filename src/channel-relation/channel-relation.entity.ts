@@ -1,24 +1,24 @@
 import { Channel } from 'src/channels/channels.entity';
 import { User } from 'src/users/users.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryColumn, Unique } from 'typeorm';
 
 @Entity()
+@Unique(['channel', 'is_admin'])
 export class ChannelRelation {
-  @PrimaryGeneratedColumn()
-  id: number;
-
   @ManyToOne(() => Channel, (channel) => channel.relations)
+  @PrimaryColumn()
   channel: Channel;
 
   @ManyToOne(() => User, (user) => user.channel_relations)
+  @PrimaryColumn()
   user: User;
 
   @Column()
-  is_owner: boolean;
+  isOwner: boolean = false;
 
   @Column()
-  is_admin: boolean;
+  isAdmin: boolean = false;
 
   @Column()
-  is_banned: boolean;
+  inBanned: boolean = false;
 }

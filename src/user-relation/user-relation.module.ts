@@ -6,6 +6,6 @@ import { UserRelationService } from './user-relation.service';
 @Module({
   imports: [TypeOrmModule.forFeature([UserRelation])],
   providers: [UserRelationService],
-  exports: [UserRelationService],
+  exports: [UserRelationService, TypeOrmModule],
 })
 export class UserRelationModule {}

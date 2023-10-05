@@ -1,6 +1,6 @@
 export enum UserRelStatus {
-  'friend_request',
-  'pending_approval',
-  'friend',
-  'blocked',
+  friendRequest,
+  pendingApproval,
+  friend,
+  block,
 }
