@@ -1,13 +1,12 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { UsersService } from '../users.service';
-import { UUID } from 'crypto';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
-      currentUserId?: UUID;
+      currentUserId?: number;
     }
   }
 }
@@ -27,7 +26,7 @@ export class CurrentUserMiddleware implements NestMiddleware {
     //   channel_relations: [],
     //   userRelations: [],
     // };
-    req.currentUserId = '99665c6a-2196-46ac-b51a-2df1fbca7875';
+    req.currentUserId = 1;
 
     next();
   }

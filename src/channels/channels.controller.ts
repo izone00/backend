@@ -5,9 +5,8 @@ import {
   Get,
   NotFoundException,
   Param,
-  Patch,
-  Post,
   Put,
+  Post,
 } from '@nestjs/common';
 import { CurrentUser } from 'src/users/decorators/current-user.decoraor';
 import { User } from 'src/users/users.entity';
@@ -15,8 +14,6 @@ import { ChannelsService } from './channels.service';
 import { CreateChannelDto } from './dtos/create-channel.dto';
 import { UpdateChannelDto } from './dtos/update-channel.dto';
 import { ChannelRelationService } from 'src/channel-relation/channel-relation.service';
-import { UUID } from 'crypto';
-import { SetAdminDto } from './dtos/set-admin.dto';
 import { UsersService } from 'src/users/users.service';
 
 @Controller('channels')
@@ -29,54 +26,57 @@ export class ChannelsController {
 
   // 채널 생성
   @Post()
-  create(@Body() body: CreateChannelDto, @CurrentUser() user: User) {
+  createChannel(@Body() body: CreateChannelDto, @CurrentUser() user: User) {
     return this.channelService.create(body, user);
   }
 
   // 채널 필터링 조회(querystring 필요)
   @Get()
-  findAll() {
+  findAllChannel() {
     return this.channelService.findAll();
   }
 
   // 특정 채널 조회
   @Get(':id')
-  findOne(@Param('id') id: UUID) {
+  findOneChannel(@Param('id') id: number) {
     return this.channelService.findOne(id);
   }
 
   // 채널 참여
   @Post('id')
   // guard?
-  async join(
-    @Param('id') id: UUID,
+  async joinChannel(
+    @Param('id') id: number,
     @Body('password') password: string,
     @CurrentUser() user: User,
   ) {
     const channel = await this.channelService.findOne(id);
     // channel 있는지, ban당했는지, password맞는지
-
+    // 초대받은 대상인지
     return this.channelRelationService.joinChannel(channel, user);
   }
 
-  // owner권한
-  @Patch(':id')
-  update(@Param('id') id: UUID, @Body() body: UpdateChannelDto) {
+  // 채널 나가기
+  @Delete(':id')
+  removeChannel(@Param('id') id: number) {
+    return this.channelService.remove(id);
+  }
+
+  // 채널 정보 수정
+  @Put(':id')
+  // ownerGuard
+  updateChannel(@Param('id') id: number, @Body() body: UpdateChannelDto) {
     // owner는 모르겟다...
     return this.channelService.update(id, body);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: UUID) {
-    return this.channelService.remove(id);
-  }
-
-  // owner권한
-  @Patch(':channelId/admins/userId')
+  // admin권한 부여 및 해지
+  @Put(':channelId/admins/userId')
+  // ownerGuard
   setAdmain(
-    @Param('channelId') channelId: UUID,
-    @Param('userId') userId: UUID,
-    @Body() body: SetAdminDto,
+    @Param('channelId') channelId: number,
+    @Param('userId') userId: number,
+    @Body() body: { isAdmin: boolean },
   ) {
     return this.channelRelationService.setAdmin(
       channelId,
@@ -85,11 +85,12 @@ export class ChannelsController {
     );
   }
 
-  // admin권한
+  // 유저 ban
   @Post(':channelId/ban/userId')
+  // adminGuard
   async banUser(
-    @Param('channelId') channelId: UUID,
-    @Param('userId') userId: UUID,
+    @Param('channelId') channelId: number,
+    @Param('userId') userId: number,
   ) {
     const channel = await this.channelService.findOne(channelId);
     const user = await this.userService.findOne(userId);
@@ -100,11 +101,13 @@ export class ChannelsController {
     return this.channelRelationService.banUser(channel, user);
   }
 
-  @Post(':channelId/ban/userId')
+  // 유저 ban 해지
+  @Delete(':channelId/ban/userId')
+  // adminGuard
   async cancelUserBanned(
-    @Param('channelId') channelId: UUID,
-    @Param('userId') userId: UUID,
+    @Param('channelId') channelId: number,
+    @Param('userId') userId: number,
   ) {
-    return this.channelRelationService.remove.;
+    return this.channelRelationService.remove;
   }
 }

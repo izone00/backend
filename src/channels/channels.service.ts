@@ -5,7 +5,6 @@ import { Repository } from 'typeorm';
 import { User } from 'src/users/users.entity';
 import { CreateChannelDto } from './dtos/create-channel.dto';
 import { UpdateChannelDto } from './dtos/update-channel.dto';
-import { UUID } from 'crypto';
 import { ChannelRelationService } from 'src/channel-relation/channel-relation.service';
 
 @Injectable()
@@ -17,7 +16,7 @@ export class ChannelsService {
 
   async create(createChannelDto: CreateChannelDto, owner: User) {
     const channel = this.repo.create({ ...createChannelDto, owner });
-    const channelRel = await this.channelRelService.createOwner(channel, owner);
+    const channelRel = await this.channelRelService.makeOwner(channel, owner);
 
     return this.repo.save(channel); // save에 실패한경우 channelRel을 삭제해야한다!
   }
@@ -26,11 +25,11 @@ export class ChannelsService {
     return this.repo.find({ where: { isPrivate: false } });
   }
 
-  findOne(id: UUID) {
+  findOne(id: number) {
     return this.repo.findOneBy({ id });
   }
 
-  async update(id: UUID, updateChannelDto: UpdateChannelDto) {
+  async update(id: number, updateChannelDto: UpdateChannelDto) {
     const channel = await this.repo.findOneBy({ id });
     if (!channel) {
       throw new NotFoundException('channel not found');
@@ -39,11 +38,12 @@ export class ChannelsService {
     return this.repo.save(channel);
   }
 
-  async remove(id: UUID) {
-    const channel = await this.repo.findOneBy({ id });
+  async remove(id: number) {
+    const channel = await this.findOne(id);
     if (!channel) {
       throw new NotFoundException('channel not found');
     }
+    await this.channelRelService.remove(channel.id, channel.owner.id);
     return this.repo.remove(channel);
   }
 }

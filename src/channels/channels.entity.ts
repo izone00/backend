@@ -7,14 +7,13 @@ import {
 } from 'typeorm';
 import { User } from 'src/users/users.entity';
 import { ChannelRelation } from 'src/channel-relation/channel-relation.entity';
-import { UUID } from 'crypto';
 
 @Entity()
 export class Channel {
   @PrimaryGeneratedColumn()
-  id: UUID;
+  id: number;
 
-  @Column()
+  @Column({ unique: true })
   title: string;
 
   @ManyToOne(() => User, (user) => user.own_channels)

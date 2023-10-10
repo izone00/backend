@@ -1,40 +1,72 @@
-import { Controller, Delete, Get, Param, Post } from '@nestjs/common';
-import { UUID } from 'crypto';
+import {
+  BadRequestException,
+  Controller,
+  Delete,
+  Get,
+  NotFoundException,
+  Param,
+  Post,
+} from '@nestjs/common';
 import { UserRelStatus } from 'src/user-relation/user-relation.enum';
 import { UserRelationService } from 'src/user-relation/user-relation.service';
 import { CurrentUser } from 'src/users/decorators/current-user.decoraor';
+import { UsersService } from 'src/users/users.service';
 
 @Controller('friends')
 export class FriendsController {
-  constructor(private userRelService: UserRelationService) {}
-
-  @Get()
-  findAll(@CurrentUser() user: UUID) {
-    return user.userRelations.filter(
-      (rel) => rel.status === UserRelStatus.friend,
-    );
-  }
+  constructor(
+    private userRelService: UserRelationService,
+    private usersService: UsersService,
+  ) {}
 
   @Post(':userId')
-  makeFriend(@CurrentUser() userId: UUID, @Param('userId') oppenseId: UUID) {
-    const relationByUser = this.userRelService.findOne(userId, oppenseId);
-    const relationByOppense = this.userRelService.findOne(oppenseId, userId);
-    if (!relationByUser && !relationByOppense) {
-      this.userRelService.create(
-        userId,
-        oppenseId,
-        UserRelStatus.pendingApproval,
-        );
-        this.userRelService.create(
-          oppenseId,
-          userId,
-          UserRelStatus.friendRequest,
+  // userBlockGuard
+  async makeFriend(
+    @CurrentUser() userId: number,
+    @Param('userId') oppenseId: number,
+  ) {
+    const user = await this.usersService.findOne(userId, {
+      relations: { userRelations: true },
+    });
+    const oppense = await this.usersService.findOne(oppenseId, {
+      relations: { userRelations: true },
+    });
+
+    const relationByUser = user.userRelations.find(
+      (rel) => rel.oppense.id === oppenseId,
+    );
+    const relationByOppense = oppense.userRelations.find(
+      (rel) => rel.oppense.id === userId,
+    );
+
+    let userRelation;
+    if (!relationByOppense) {
+      userRelation = await this.userRelService.requestFriend(user, oppense);
+    } else if (
+      relationByUser.status === UserRelStatus.friendRequest &&
+      relationByOppense.status === UserRelStatus.pendingApproval
+    ) {
+      userRelation = await this.userRelService.acceptFriend(
+        relationByUser,
+        relationByOppense,
       );
-    } else if ()
+    } else {
+      throw new BadRequestException('잘못된 친구 신청입니다.');
+    }
+
+    return userRelation;
+  }
+
+  @Get()
+  findAllFriends(@CurrentUser() userId: number) {
+    return this.userRelService.findAll(userId, UserRelStatus.friend);
   }
 
   @Delete(':userId')
-  removeFriend(@CurrentUser() userId: UUID, @Param('userId') oppenseId: UUID) {
-    return this.userRelService.remove(userId, oppenseId, UserRelStatus.friend);
+  async removeFriend(
+    @CurrentUser() userId: number,
+    @Param('userId') oppenseId: number,
+  ) {
+    return this.userRelService.removeFriendship(userId, oppenseId);
   }
 }

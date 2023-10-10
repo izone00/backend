@@ -4,7 +4,6 @@ import { Repository } from 'typeorm';
 import { ChannelRelation } from './channel-relation.entity';
 import { User } from 'src/users/users.entity';
 import { Channel } from 'src/channels/channels.entity';
-import { UUID } from 'crypto';
 
 @Injectable()
 export class ChannelRelationService {
@@ -13,7 +12,7 @@ export class ChannelRelationService {
     private repo: Repository<ChannelRelation>,
   ) {}
 
-  createOwner(channel: Channel, user: User) {
+  makeOwner(channel: Channel, user: User) {
     const channelRelation = this.repo.create({
       channel,
       user,
@@ -24,9 +23,9 @@ export class ChannelRelationService {
     return this.repo.save(channelRelation);
   }
 
-  findAll(channel: Channel) {
+  findAllMembers(channel: Channel) {
     // 정렬 해야함
-    return this.repo.find({ where: { channel, inBanned: false } });
+    return this.repo.find({ where: { channel, isBanned: false } });
   }
 
   async joinChannel(channel: Channel, user: User) {
@@ -38,7 +37,7 @@ export class ChannelRelationService {
     return this.repo.save(channelRelation);
   }
 
-  async setAdmin(channelId: UUID, userId: UUID, isAdmin: boolean) {
+  async setAdmin(channelId: number, userId: number, isAdmin: boolean) {
     const channelRelation = await this.repo.findOneBy({
       channel: { id: channelId },
       user: { id: userId },
@@ -55,13 +54,13 @@ export class ChannelRelationService {
       channel,
       user,
       isAdmin: false,
-      inBanned: true,
+      isBanned: true,
     });
 
     return this.repo.save(channelRelaion);
   }
 
-  async remove(idChannel: UUID, idUser: UUID) {
+  async remove(idChannel: number, idUser: number) {
     const channelRel = await this.repo.find({
       where: { channel: { id: idChannel }, user: { id: idUser } },
     });

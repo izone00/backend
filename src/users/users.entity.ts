@@ -1,4 +1,3 @@
-import { UUID } from 'crypto';
 import { ChannelRelation } from 'src/channel-relation/channel-relation.entity';
 import { Channel } from 'src/channels/channels.entity';
 import { UserRelation } from 'src/user-relation/user-relation.entity';
@@ -7,7 +6,7 @@ import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
-  id: UUID;
+  id: number;
 
   @Column({ unique: true })
   email: string;
@@ -16,7 +15,7 @@ export class User {
   nickname: string;
 
   @Column()
-  lp: number;
+  lp: number = 1000;
 
   // @Column()
   // abatar: string

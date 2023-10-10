@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { UUID } from 'crypto';
 import { UserUpdateDto } from './dtos/user-update.dto';
 import { UserCreateDto } from './dtos/user-create.dto';
+import { CurrentUser } from './decorators/current-user.decoraor';
 
 @Controller('users')
 export class UsersController {
@@ -19,12 +19,14 @@ export class UsersController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: UUID) {
+  findOne(@Param('id') id: number) {
     return this.usersService.findOne(id);
   }
 
-  @Put(':id')
-  update(@Param('id') id: UUID, @Body() body: UserUpdateDto) {
-    return this.usersService.update(id, body);
+  @Put()
+  async update(@CurrentUser() userId: number, @Body() body: UserUpdateDto) {
+    const user = await this.usersService.findOne(userId);
+
+    return this.usersService.update(user, body);
   }
 }
