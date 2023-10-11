@@ -14,18 +14,23 @@ export class ChannelsService {
     private channelRelService: ChannelRelationService,
   ) {}
 
-  async create(createChannelDto: CreateChannelDto, owner: User) {
+  async createChannel(createChannelDto: CreateChannelDto, owner: User) {
     const channel = this.repo.create({ ...createChannelDto, owner });
-    const channelRel = await this.channelRelService.makeOwner(channel, owner);
+    const savedChannel = await this.repo.save(channel);
+    try {
+      await this.channelRelService.makeOwner(channel, owner);
+    } catch {
+      this.remove(savedChannel.id);
+    }
 
-    return this.repo.save(channel); // save에 실패한경우 channelRel을 삭제해야한다!
+    return savedChannel;
   }
 
-  findAll() {
-    return this.repo.find({ where: { isPrivate: false } });
+  findAllChannels() {
+    return this.repo.find();
   }
 
-  findOne(id: number) {
+  findOneChannel(id: number) {
     return this.repo.findOneBy({ id });
   }
 
@@ -39,11 +44,11 @@ export class ChannelsService {
   }
 
   async remove(id: number) {
-    const channel = await this.findOne(id);
+    const channel = await this.findOneChannel(id);
     if (!channel) {
       throw new NotFoundException('channel not found');
     }
-    await this.channelRelService.remove(channel.id, channel.owner.id);
+    // cascade를 이용해 channelRelations모두 삭제
     return this.repo.remove(channel);
   }
 }

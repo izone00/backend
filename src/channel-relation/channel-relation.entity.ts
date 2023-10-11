@@ -1,6 +1,12 @@
 import { Channel } from 'src/channels/channels.entity';
 import { User } from 'src/users/users.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
 export class ChannelRelation {
@@ -21,4 +27,7 @@ export class ChannelRelation {
 
   @Column()
   isBanned: boolean = false;
+
+  @CreateDateColumn()
+  created_at: Date;
 }

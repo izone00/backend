@@ -7,6 +7,7 @@ import {
   Param,
   Put,
   Post,
+  BadRequestException,
 } from '@nestjs/common';
 import { CurrentUser } from 'src/users/decorators/current-user.decoraor';
 import { User } from 'src/users/users.entity';
@@ -26,20 +27,24 @@ export class ChannelsController {
 
   // 채널 생성
   @Post()
-  createChannel(@Body() body: CreateChannelDto, @CurrentUser() user: User) {
-    return this.channelService.create(body, user);
+  async createChannel(
+    @Body() body: CreateChannelDto,
+    @CurrentUser() userId: number,
+  ) {
+    const owner = await this.userService.findOne(userId);
+    return this.channelService.createChannel(body, owner);
   }
 
   // 채널 필터링 조회(querystring 필요)
   @Get()
   findAllChannel() {
-    return this.channelService.findAll();
+    return this.channelService.findAllChannels();
   }
 
   // 특정 채널 조회
   @Get(':id')
   findOneChannel(@Param('id') id: number) {
-    return this.channelService.findOne(id);
+    return this.channelService.findOneChannel(id);
   }
 
   // 채널 참여
@@ -50,7 +55,7 @@ export class ChannelsController {
     @Body('password') password: string,
     @CurrentUser() user: User,
   ) {
-    const channel = await this.channelService.findOne(id);
+    const channel = await this.channelService.findOneChannel(id);
     // channel 있는지, ban당했는지, password맞는지
     // 초대받은 대상인지
     return this.channelRelationService.joinChannel(channel, user);
@@ -58,16 +63,45 @@ export class ChannelsController {
 
   // 채널 나가기
   @Delete(':id')
-  removeChannel(@Param('id') id: number) {
-    return this.channelService.remove(id);
+  async exitChannel(
+    @Param('id') channelId: number,
+    @CurrentUser() userId: number,
+  ) {
+    const channelRelations =
+      await this.channelRelationService.findAllMembers(channelId);
+    if (channelRelations.length === 1) {
+      return this.channelService.remove(channelId);
+    }
+
+    return this.channelRelationService.exitChannel(channelId, userId);
   }
 
   // 채널 정보 수정
   @Put(':id')
   // ownerGuard
   updateChannel(@Param('id') id: number, @Body() body: UpdateChannelDto) {
-    // owner는 모르겟다...
     return this.channelService.update(id, body);
+  }
+
+  // owner 변경
+  @Post(':channelId/owner/userId')
+  // ownerGuard
+  async changeOwner(
+    @Param('channelId') channelId: number,
+    @Param('userId') userId: number,
+  ) {
+    const relation = await this.channelRelationService.findOne(
+      channelId,
+      userId,
+    );
+    if (relation.isBanned === true) {
+      throw new BadRequestException('차단된 유저입니다!');
+    }
+
+    return this.channelRelationService.makeOwner(
+      relation.channel,
+      relation.user,
+    );
   }
 
   // admin권한 부여 및 해지

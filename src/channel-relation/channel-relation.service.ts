@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ChannelRelation } from './channel-relation.entity';
@@ -12,40 +17,90 @@ export class ChannelRelationService {
     private repo: Repository<ChannelRelation>,
   ) {}
 
-  makeOwner(channel: Channel, user: User) {
-    const channelRelation = this.repo.create({
+  async findOne(channelId: number, userId: number) {
+    const relation = await this.repo.findOneBy({
+      channel: { id: channelId },
+      user: { id: userId },
+    });
+    if (!relation) throw new NotFoundException('channel-relation not found!');
+
+    return relation;
+  }
+
+  async joinChannel(channel: Channel, user: User) {
+    const channelRelation = await this.findAllMembers(channel.id);
+    if (channelRelation.find((rel) => rel.user.id === user.id)) {
+      throw new BadRequestException('새로 참여할 수 없는 유저입니다!');
+    }
+
+    const newChannelRelation = this.repo.create({
+      channel,
+      user,
+    });
+
+    return this.repo.save(newChannelRelation);
+  }
+
+  findAllMembers(channelId: number) {
+    return this.repo.find({
+      where: { channel: { id: channelId }, isBanned: false },
+      order: { created_at: 'ASC' },
+    });
+  }
+
+  // entity에서 owner가 채널을 나가는 예외를 처리해야한다.
+  async exitChannel(channelId: number, userId: number) {
+    const channelRelations = await this.findAllMembers(channelId);
+    const relationToRemove = channelRelations.find(
+      (rel) => rel.user.id === userId,
+    );
+    if (!relationToRemove || relationToRemove.isBanned) {
+      throw new NotFoundException('채널에 해당 유저가 존재하지 않습니다!');
+    }
+    if (channelRelations.length === 1) {
+      throw new InternalServerErrorException(
+        '채널에는 적어도 한명의 유저가 있어야 합니다.',
+      );
+    }
+
+    const newOwnerRelation = channelRelations.find(
+      (rel) => rel.user.id !== userId,
+    );
+    if (relationToRemove.isOwner) {
+      await this.makeOwner(newOwnerRelation.channel, newOwnerRelation.user);
+    }
+
+    return this.repo.remove(relationToRemove);
+  }
+
+  async makeOwner(channel: Channel, user: User) {
+    const newOwnerRelation = this.repo.create({
       channel,
       user,
       isOwner: true,
       isAdmin: true,
     });
 
-    return this.repo.save(channelRelation);
-  }
-
-  findAllMembers(channel: Channel) {
-    // 정렬 해야함
-    return this.repo.find({ where: { channel, isBanned: false } });
-  }
-
-  async joinChannel(channel: Channel, user: User) {
-    const channelRelation = this.repo.create({
+    const prevOwnerRelation = await this.repo.findOneBy({
       channel,
-      user,
+      isOwner: true,
     });
+    if (prevOwnerRelation) {
+      prevOwnerRelation.isOwner = false;
+      prevOwnerRelation.isAdmin = false;
+      return this.repo.save([newOwnerRelation, prevOwnerRelation]);
+    }
 
-    return this.repo.save(channelRelation);
+    return this.repo.save(newOwnerRelation);
   }
 
   async setAdmin(channelId: number, userId: number, isAdmin: boolean) {
-    const channelRelation = await this.repo.findOneBy({
-      channel: { id: channelId },
-      user: { id: userId },
-    });
-    if (!channelRelation) {
-      throw new NotFoundException('channel-relation not found!');
+    const channelRelation = await this.findOne(channelId, userId);
+    if (channelRelation.isBanned || channelRelation.isOwner) {
+      throw new BadRequestException('admin권한을 변경할 수 없는 유저입니다!');
     }
     channelRelation.isAdmin = isAdmin;
+
     return this.repo.save(channelRelation);
   }
 
@@ -53,22 +108,13 @@ export class ChannelRelationService {
     const channelRelaion = this.repo.create({
       channel,
       user,
-      isAdmin: false,
       isBanned: true,
     });
 
     return this.repo.save(channelRelaion);
   }
 
-  async remove(idChannel: number, idUser: number) {
-    const channelRel = await this.repo.find({
-      where: { channel: { id: idChannel }, user: { id: idUser } },
-    });
-    if (channelRel.length === 0) {
-      throw new NotFoundException(
-        '지우고자 하는 channelRelation이 존재하지 않습니다.',
-      );
-    }
-    return this.repo.remove(channelRel);
+  findAllBanned(channelId: number) {
+    return this.repo.findBy({ channel: { id: channelId }, isBanned: true });
   }
 }
