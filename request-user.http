@@ -1,0 +1,33 @@
+###create user
+POST http://localhost:3000/users/register
+Content-Type: application/json
+
+{
+  "email": "test2@test.com",
+  "nickname": "nick"
+}
+
+###
+GET http://localhost:3000/users
+
+
+###
+GET http://localhost:3000/users/1
+
+###
+POST http://localhost:3000/friends/2
+
+###
+GET http://localhost:3000/friends
+
+###
+DELETE  http://localhost:3000/friends/2
+
+###
+POST http://localhost:3000/blocks/2
+
+###
+GET http://localhost:3000/blocks
+
+###
+DELETE  http://localhost:3000/blocks/2

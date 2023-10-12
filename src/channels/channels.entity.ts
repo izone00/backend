@@ -16,14 +16,14 @@ export class Channel {
   @Column({ unique: true })
   title: string;
 
-  @ManyToOne(() => User, (user) => user.own_channels)
+  @ManyToOne(() => User, (user) => user.own_channels, { eager: true })
   owner: User;
 
   @Column()
-  password: string;
+  password: string = '';
 
   @Column()
-  isPrivate: boolean;
+  isPrivate: boolean = false;
 
   @OneToMany(() => ChannelRelation, (relation) => relation.channel)
   relations: ChannelRelation;

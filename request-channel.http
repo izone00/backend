@@ -1,0 +1,41 @@
+# create channel
+POST http://localhost:3000/channels
+Content-Type: application/json
+
+{
+  "title": "first-channel",
+  "password": "",
+  "is_private": false  
+}
+
+###
+GET http://localhost:3000/channels
+
+
+### 채널 참여
+POST http://localhost:3000/channels/5
+
+### 특정채널 조회
+GET http://localhost:3000/channels/5
+
+
+### 채널 나가기
+DELETE  http://localhost:3000/channels/5
+
+
+### owner 변경
+POST http://localhost:3000/channels/5/owner/1
+
+### admin 수정
+PUT http://localhost:3000/channels/5/admins/1
+Content-Type: application/json
+
+{
+  "isAdmin": false
+}
+
+### ban
+POST http://localhost:3000/channels/5/ban/2
+
+### ban 취소
+DELETE  http://localhost:3000/channels/5/ban/2

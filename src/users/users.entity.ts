@@ -21,7 +21,7 @@ export class User {
   // abatar: string
 
   @Column()
-  bio: string;
+  bio: string = '';
 
   @OneToMany(() => Channel, (channel) => channel.owner)
   own_channels: Channel[];

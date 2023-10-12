@@ -26,7 +26,7 @@ export class CurrentUserMiddleware implements NestMiddleware {
     //   channel_relations: [],
     //   userRelations: [],
     // };
-    req.currentUserId = 1;
+    req.currentUserId = 3;
 
     next();
   }

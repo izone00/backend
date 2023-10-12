@@ -1,6 +1,7 @@
 import {
   Column,
   Entity,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
   Unique,
@@ -14,12 +15,16 @@ export class UserRelation {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => User, (user) => user.userRelations)
+  @ManyToOne(() => User, (user) => user.userRelations, { eager: true })
   user: User;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { eager: true })
   oppense: User;
 
+  // @Column({
+  //   type: 'enum',
+  //   enum: UserRelStatus,
+  // })
   @Column()
   status: UserRelStatus;
 }

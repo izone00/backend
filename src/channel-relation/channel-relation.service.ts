@@ -28,11 +28,11 @@ export class ChannelRelationService {
   }
 
   async joinChannel(channel: Channel, user: User) {
-    const channelRelation = await this.findAllMembers(channel.id);
-    if (channelRelation.find((rel) => rel.user.id === user.id)) {
-      throw new BadRequestException('새로 참여할 수 없는 유저입니다!');
+    const channelRelation = await this.repo.findOneBy({ channel, user });
+    console.log(channelRelation);
+    if (channelRelation) {
+      throw new BadRequestException('참여할 수 없는 유저입니다.');
     }
-
     const newChannelRelation = this.repo.create({
       channel,
       user,
@@ -66,6 +66,7 @@ export class ChannelRelationService {
     const newOwnerRelation = channelRelations.find(
       (rel) => rel.user.id !== userId,
     );
+    console.log(newOwnerRelation);
     if (relationToRemove.isOwner) {
       await this.makeOwner(newOwnerRelation.channel, newOwnerRelation.user);
     }
@@ -80,6 +81,10 @@ export class ChannelRelationService {
       isOwner: true,
       isAdmin: true,
     });
+    const channelRelation = await this.repo.findOneBy({ channel, user });
+    if (channelRelation) {
+      newOwnerRelation.id = channelRelation.id;
+    }
 
     const prevOwnerRelation = await this.repo.findOneBy({
       channel,
@@ -104,14 +109,32 @@ export class ChannelRelationService {
     return this.repo.save(channelRelation);
   }
 
-  banUser(channel: Channel, user: User) {
-    const channelRelaion = this.repo.create({
+  async banUser(channel: Channel, user: User) {
+    const channelRelation = await this.repo.findOneBy({ channel, user });
+    if (channelRelation?.isOwner) {
+      throw new InternalServerErrorException('owner는 ban할 수 없습니다.');
+    }
+
+    const banRelation = this.repo.create({
       channel,
       user,
       isBanned: true,
     });
+    if (channelRelation) {
+      banRelation.id = channelRelation.id;
+    }
 
-    return this.repo.save(channelRelaion);
+    return this.repo.save(banRelation);
+  }
+
+  cancleUserBanned(relation: ChannelRelation) {
+    if (relation.isBanned === false) {
+      throw new InternalServerErrorException(
+        'ban당한 유저에만 수행할 수 있습니다.',
+      );
+    }
+
+    return this.repo.remove(relation);
   }
 
   findAllBanned(channelId: number) {

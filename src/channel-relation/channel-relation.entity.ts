@@ -13,10 +13,13 @@ export class ChannelRelation {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Channel, (channel) => channel.relations)
+  @ManyToOne(() => Channel, (channel) => channel.relations, {
+    eager: true,
+    onDelete: 'CASCADE',
+  })
   channel: Channel;
 
-  @ManyToOne(() => User, (user) => user.channel_relations)
+  @ManyToOne(() => User, (user) => user.channel_relations, { eager: true })
   user: User;
 
   @Column()

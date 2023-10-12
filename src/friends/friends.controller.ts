@@ -3,8 +3,8 @@ import {
   Controller,
   Delete,
   Get,
-  NotFoundException,
   Param,
+  ParseIntPipe,
   Post,
 } from '@nestjs/common';
 import { UserRelStatus } from 'src/user-relation/user-relation.enum';
@@ -23,7 +23,7 @@ export class FriendsController {
   // userBlockGuard
   async makeFriend(
     @CurrentUser() userId: number,
-    @Param('userId') oppenseId: number,
+    @Param('userId', ParseIntPipe) oppenseId: number,
   ) {
     const user = await this.usersService.findOne(userId, {
       relations: { userRelations: true },
@@ -31,13 +31,15 @@ export class FriendsController {
     const oppense = await this.usersService.findOne(oppenseId, {
       relations: { userRelations: true },
     });
-
+    console.log(user);
     const relationByUser = user.userRelations.find(
       (rel) => rel.oppense.id === oppenseId,
     );
     const relationByOppense = oppense.userRelations.find(
       (rel) => rel.oppense.id === userId,
     );
+
+    console.log(relationByUser);
 
     let userRelation;
     if (!relationByOppense) {

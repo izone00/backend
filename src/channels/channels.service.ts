@@ -30,8 +30,12 @@ export class ChannelsService {
     return this.repo.find();
   }
 
-  findOneChannel(id: number) {
-    return this.repo.findOneBy({ id });
+  async findOneChannel(id: number) {
+    const channel = await this.repo.findOneBy({ id });
+    if (!channel) {
+      throw new NotFoundException('channel not found!');
+    }
+    return channel;
   }
 
   async update(id: number, updateChannelDto: UpdateChannelDto) {

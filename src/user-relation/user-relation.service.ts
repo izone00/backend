@@ -25,8 +25,8 @@ export class UserRelationService {
     return this.repo.find({ where: { user: { id: userId }, status } });
   }
 
-  findOne(userid: number, oppenseId: number) {
-    const userRelation = this.repo.findOneBy({
+  async findOne(userid: number, oppenseId: number) {
+    const userRelation = await this.repo.findOneBy({
       user: { id: userid },
       oppense: { id: oppenseId },
     });
@@ -60,6 +60,7 @@ export class UserRelationService {
     return this.repo.save([senderRel, receiverRel]);
   }
 
+  // param에 user,oppense를 보장해줄것
   acceptFriend(userRel: UserRelation, oppenseRel: UserRelation) {
     if (
       userRel.oppense.id !== oppenseRel.user.id ||
@@ -89,9 +90,12 @@ export class UserRelationService {
 
   // 차단 관계
   async blockUser(user: User, oppense: User) {
-    const relationByOppense = await this.findOne(oppense.id, user.id);
-    if (this.friendRelations.includes(relationByOppense.status)) {
-      await this.repo.remove(relationByOppense);
+    const relationByOppense = await this.repo.findOneBy({
+      user: oppense,
+      oppense: user,
+    });
+    if (this.friendRelations.includes(relationByOppense?.status)) {
+      await this.removeFriendship(user.id, oppense.id);
     }
 
     const blockRelation = this.repo.create({
